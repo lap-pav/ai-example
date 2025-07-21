@@ -1,0 +1,64 @@
+version: '3.8'
+services:
+  backend:
+    build:
+      context: ./docker/backend
+      dockerfile: Dockerfile
+    ports:
+      - "9001:80"
+    depends_on:
+      - db
+      - redis
+    networks:
+      - ai_proj1net
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=ai_proj1
+      - DB_USERNAME=ai_proj1
+      - DB_PASSWORD=ai_proj1
+      - REDIS_HOST=redis
+    volumes:
+      - ./docker/backend/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/backend/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf:ro
+      - ./docker/backend/local_setup.sh:/usr/local/bin/local_setup.sh:ro
+      - ./backend:/var/www
+  db:
+    image: mysql:8.0.36
+    ports:
+      - "9002:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ai_proj1
+      MYSQL_USER: ai_proj1
+      MYSQL_PASSWORD: ai_proj1
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - ai_proj1net
+  frontend:
+    build:
+      context: ./docker/frontend
+      dockerfile: Dockerfile
+    ports:
+      - "9003:8080"
+    networks:
+      - ai_proj1net
+    volumes:
+      - ./frontend:/app
+    environment:
+      PORT: 8080
+      HOST: 0.0.0.0
+  redis:
+    image: redis:alpine
+    ports:
+      - "9004:6379"
+    networks:
+      - ai_proj1net
+networks:
+  ai_proj1net:
+    driver: bridge
+volumes:
+  db_data:
+  backend_data:
+  frontend_data: 
